@@ -5,6 +5,9 @@ using Streamer.bot.Plugin.Interface.Model;
 
 public static class CPH
 {
+    public static string TwitchOAuthToken;
+    public static object[] TwitchClientId;
+
     public static void StreamDeckSetBackgroundLocal(string buttonId, string imageFile, string color, int state){}
     public static void StreamDeckSetTitle(string buttonId, string title){}
     public static void StreamDeckSetTitle(string buttonId, string title, int state){}
