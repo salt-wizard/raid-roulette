@@ -52,7 +52,7 @@ const RaidScreen = () => {
     /*
         Enable the manual raid button if there is input in the text box
     */
-    function handleManualTarget(event: { target: { value: SetStateAction<string>; }; }){
+    function handleManualTarget(event){
         if(event.target.value){
             setManualTextEntered(false);
         } else {
@@ -82,7 +82,7 @@ const RaidScreen = () => {
         - Set the raid status to the user targeted
         - Send a message over WS to indicate the raid target
     */
-    function startTargetedRaid(_e: { target: { value: string; }; }){
+    function startTargetedRaid(_e){
         // The username is the target value
         const eventJson = JSON.parse(_e.target.value);
         const userName = eventJson.userName;
@@ -139,7 +139,7 @@ const RaidScreen = () => {
         sendMessage('{"action":"cancel"}');
     }
 
-    function blackListTarget(_e: { target: { value: string; }; }){
+    function blackListTarget(_e){
         // The username is the target value
         const eventJson = JSON.parse(_e.target.value);
         const userId = eventJson.userId;

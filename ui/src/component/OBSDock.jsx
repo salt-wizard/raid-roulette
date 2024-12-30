@@ -2,13 +2,13 @@ import React from 'react';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
-import RaidScreen from './RaidScreen';
+import RaidScreen from './RaidScreen.jsx';
 
 // URL for Streamer.Bot Web Socket
 const OBSDock = () => {
     const [tabValue, setTabValue] = React.useState('one');
 
-    const handleChange = (_e: React.SyntheticEvent, newValue: React.SetStateAction<string>) => {
+    const handleChange = (_e, newValue) => {
         //console.log(e);
         setTabValue(newValue);
     };
