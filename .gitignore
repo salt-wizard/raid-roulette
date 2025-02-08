@@ -129,3 +129,16 @@ dist
 .yarn/install-state.gz
 .pnp.*
 /streamerbot/raidroulette.txt
+/streamerbot/obj/streamerbot.csproj.nuget.dgspec.json
+/streamerbot/obj/streamerbot.csproj.nuget.g.props
+/streamerbot/obj/streamerbot.csproj.nuget.g.targets
+/streamerbot/obj/Debug
+/streamerbot/obj/project.assets.json
+/streamerbot/obj/project.nuget.cache
+/streamerbot/obj/Debug
+/streamerbot/obj/project.assets.json
+/streamerbot/obj/project.nuget.cache
+/streamerbot/obj/streamerbot.csproj.nuget.dgspec.json
+/streamerbot/obj/streamerbot.csproj.nuget.g.props
+/streamerbot/obj/streamerbot.csproj.nuget.g.targets
+/streamerbot/bin
