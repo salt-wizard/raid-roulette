@@ -13,3 +13,7 @@
 .manual-raid-button{
     margin-top: 10px;
 }
+
+.dropbtn > svg {
+    pointer-events: none;
+}

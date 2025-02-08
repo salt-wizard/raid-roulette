@@ -1,36 +1,19 @@
 import { SetStateAction, useEffect, useState } from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Stack, TextField, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import ParaglidingIcon from '@mui/icons-material/Paragliding';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LiveTvIcon from '@mui/icons-material/LiveTv';
-import useWebSocket from 'react-use-websocket';
-
 import './RaidScreen.css';
 
-// URL for Streamer.Bot Web Socket
-const RAID_WS_URL = 'ws://127.0.0.1:10002/'
-
-const RaidScreen = () => {
-    const [enableRedeem, setEnableRedeem] = useState(false);
+const RaidScreen = ({sendMessage, raidList, clientId, oAuthToken}) => {
+    const [enableRedeem, setEnableRedeem] = useState(true);
     const [manualTextEntered, setManualTextEntered] = useState(true);
     const [raidInProgress, setRaidInProgress] = useState(false);
     const [manualTarget, setManualTarget] = useState("");
-    const [raidStatus, setRaidStatus] = useState("Not Enabled");
-    const [clientId, setClientId] = useState("");
-    const [oAuthToken, setOAuthToken] = useState("");
-
-    // The raid list will be provided through this state
-    const [raidList, setRaidList] = useState([]);
-
-    // Establish a web socket connection and look for latest messages.
-    const {sendMessage, lastMessage} = useWebSocket(RAID_WS_URL, {
-            onOpen: () => { 
-                console.log('WebSocket connection established.'); 
-            }, 
-            share: true
-        });
-
+    const [raidStatus, setRaidStatus] = useState("Waiting For Input...");
 
     /*
         Toggle the redeems on or off depending on which button is clicked.
@@ -47,6 +30,13 @@ const RaidScreen = () => {
             setRaidStatus("Waiting For Input...")
             sendMessage('{"action":"cancel"}');
         }
+    }
+
+    function requestTargets(){
+        const json = {
+            "action": "render"
+        }
+        sendMessage(JSON.stringify(json));
     }
 
     /*
@@ -83,8 +73,8 @@ const RaidScreen = () => {
         - Send a message over WS to indicate the raid target
     */
     function startTargetedRaid(_e){
-        // The username is the target value
-        const eventJson = JSON.parse(_e.target.value);
+        // The username is the current target value
+        const eventJson = JSON.parse(_e.currentTarget.value);
         const userName = eventJson.userName;
         const userId = eventJson.userId;
         setRaidInProgress(!raidInProgress);
@@ -140,8 +130,8 @@ const RaidScreen = () => {
     }
 
     function blackListTarget(_e){
-        // The username is the target value
-        const eventJson = JSON.parse(_e.target.value);
+        // The username is the current target value
+        const eventJson = JSON.parse(_e.currentTarget.value);
         const userId = eventJson.userId;
 
         const json = {
@@ -152,29 +142,25 @@ const RaidScreen = () => {
         sendMessage(JSON.stringify(json));
     }
 
-    /*
-        Handler for any messages that arrive from Streamer.bot
-    */
-    useEffect(()=>{
-        if(lastMessage != null){
-            //console.log(lastMessage.data);
-            const jsonData = JSON.parse(lastMessage.data)
-            if(jsonData.action == "update"){
-                setRaidList(JSON.parse(jsonData.users));
-            }
-            if(jsonData.action == "token"){
-                setClientId(jsonData.clientId);
-                setOAuthToken(jsonData.token);
-            }
+    function vetoTarget(_e){
+        // The username is the current target value
+        const eventJson = JSON.parse(_e.currentTarget.value);
+        const userId = eventJson.userId;
+
+        const json = {
+            "action": "veto",
+            "target": userId
         }
-    },[lastMessage]);
+
+        sendMessage(JSON.stringify(json));
+    }
 
     return(
         <div>
-            <Box className="raid-box">
+            {/*<Box className="raid-box">
                 <Button className="raid-button" color="success" variant="contained" disabled={enableRedeem} onClick={toggleRedeemStatus}>Enable</Button>
                 <Button className="raid-button" color="error" variant="contained" disabled={!enableRedeem} onClick={toggleRedeemStatus}>Disable</Button>
-            </Box>
+            </Box>*/}
             <Box className="raid-box">
                 <Typography>Raid Status - {raidStatus}</Typography>
             </Box>
@@ -204,7 +190,7 @@ const RaidScreen = () => {
                     </Button>
                 </Box>
                 <Box className="buffer" />
-                <Accordion>
+                <Accordion defaultExpanded>
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
                         aria-controls="panel1-content"
@@ -218,11 +204,46 @@ const RaidScreen = () => {
                 
                 {raidList !== null ? raidList.map((raidTarget) => {
                     return (
-                        raidTarget["isBlacklisted"] === false && raidTarget["isOnline"] === true // Only show the target if they're not blacklisted.
+                        raidTarget["isBlacklisted"] === false && raidTarget["isVeto"] == false && raidTarget["isOnline"] === true // Only show the target if they're not blacklisted, not vetoed, and online.
                         ?
                         <Stack className="raid-box" key={raidTarget["userName"] + "-key"} direction="row">
-                            <Box><Button disabled={raidInProgress} value={'{"userId": "' + raidTarget["userId"] + '","userName": "' + raidTarget["userName"] + '"}'} className="raid-button" color="success" variant="outlined" onClick={startTargetedRaid}>Raid</Button></Box>
-                            <Box><Button value={'{"userId": "' + raidTarget["userId"] + '","userName": "' + raidTarget["userName"] + '"}'} className="raid-button" color="error" variant="outlined" onClick={blackListTarget}><DoNotDisturbIcon /></Button></Box>
+                            <Box>
+                                <Tooltip title={"Raid " + raidTarget["userName"]} placement="top">
+                                    <IconButton 
+                                        disabled={raidInProgress} 
+                                        value={'{"userId": "' + raidTarget["userId"] + '","userName": "' + raidTarget["userName"] + '"}'} 
+                                        className="raid-button" 
+                                        color="success" 
+                                        variant="outlined" 
+                                        onClick={startTargetedRaid}>
+                                        <ParaglidingIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
+                            <Box>
+                                <Tooltip title={"Veto " + raidTarget["userName"]} placement="top">
+                                    <IconButton 
+                                        value={'{"userId": "' + raidTarget["userId"] + '","userName": "' + raidTarget["userName"] + '"}'} 
+                                        className="raid-button" 
+                                        color="warning" 
+                                        variant="outlined"
+                                        onClick={vetoTarget}> 
+                                        <DoNotDisturbIcon/>
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
+                            <Box>
+                                <Tooltip title={"Blacklist " + raidTarget["userName"]} placement="top">
+                                    <IconButton 
+                                        value={'{"userId": "' + raidTarget["userId"] + '","userName": "' + raidTarget["userName"] + '"}'} 
+                                        className="raid-button" 
+                                        color="error" 
+                                        variant="outlined" 
+                                        onClick={blackListTarget}> 
+                                        <DeleteForeverIcon/>
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
                             <img 
                                 style={{
                                     borderRadius: "50%",

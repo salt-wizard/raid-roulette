@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "t89eRW86/HbTADG3zUEfjtuvbeIohI8Hb+RkTj190hIlFvO7vj3yil+JGnrlyyiXyaYxgFdmUHnumuW7yoiWDw==",
+  "dgSpecHash": "sHpyPCXbYV5iPr8nB6q/4MNvDLzHFbdiIcJZWLxxYvVnp4UHLKLRAZH7wwA0UUWuOydJCyTPCaatqKobUxm1sQ==",
   "success": true,
-  "projectFilePath": "C:\\GitHub\\raid-selector\\streamerbot\\streamerbot.csproj",
+  "projectFilePath": "C:\\GitHub\\raid-roulette\\streamerbot\\streamerbot.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\salt\\.nuget\\packages\\microsoft.netcore.platforms\\1.0.1\\microsoft.netcore.platforms.1.0.1.nupkg.sha512",
     "C:\\Users\\salt\\.nuget\\packages\\microsoft.netcore.targets\\1.0.1\\microsoft.netcore.targets.1.0.1.nupkg.sha512",

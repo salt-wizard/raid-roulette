@@ -25,6 +25,7 @@ public class CPHInline
 {
     private string ACTION_GROUP = "RS1";
     private string RAID_TABLE = "raid_targets";
+    private bool DEBUG = false;
 
     public void Init(){
     }
@@ -54,9 +55,12 @@ public class CPHInline
             LogVerbose($"Target {target} being suggested by {userName}.");
             
             LogVerbose($"Validating if {userName} has been following long enough...");
-            if(isFollowing){
-                string followAgeDays = (string)args["followAgeDays"];
-                if(Int32.Parse(followAgeDays) > 31){
+            if(DEBUG || isFollowing){
+                string followAgeDays = "0";
+                if(!DEBUG){
+                    followAgeDays = (string)args["followAgeDays"];
+                }
+                if(DEBUG || Int32.Parse(followAgeDays) > 31){
                     LogVerbose($"User {userName} has been following long enough.");
                     
                     LogVerbose("Getting extended information about target...");
@@ -99,7 +103,8 @@ public class CPHInline
                                     new JProperty("raidCount", 0),
                                     new JProperty("lastRaidDate", ""),
                                     new JProperty("raidedByCount", 0),
-                                    new JProperty("lastRaidedDate", "")
+                                    new JProperty("lastRaidedDate", ""),
+                                    new JProperty("isVeto", false)
                                 );
                                 localRaidDB.Add(jobj);
 
@@ -182,7 +187,7 @@ public class CPHInline
                     List<string> userIds = new();
                     foreach(var item in localRaidDB){
                         JObject json = (JObject)item;
-                        if((bool)json["isOnline"] == true && (bool)json["isBlacklisted"] == false){
+                        if((bool)json["isOnline"] == true && (bool)json["isBlacklisted"] == false && (bool)json["isVeto"] == false){
                             LogVerbose($"Adding userId {(string)json["userId"]}");
                             userIds.Add((string)json["userId"]);
                         }
@@ -300,6 +305,93 @@ public class CPHInline
         return true;
     }
 
+    public bool VetoUser(){
+        LogVerbose("=============================");
+        LogVerbose($"ENTER VetoUser");
+        LogVerbose("=============================");
+        string? localRaidDBString = CPH.GetGlobalVar<string>("localRaidDB", true);
+
+        string data = (string)args["data"];
+        JObject dataObj = JObject.Parse(data);
+        string action = (string)dataObj["action"];
+        string target = (string)dataObj["target"];
+
+        if(action != null && action.Equals("veto")){
+            // Update the database
+            UpdateUserVetoStatus(target, true);
+            LoadRaidDB();
+        }
+        
+        LogVerbose("=============================");
+        LogVerbose($"ENTER VetoUser");
+        LogVerbose("=============================");
+        return true;
+    }
+
+    public bool UndoBlacklistUser(){
+        LogVerbose("=============================");
+        LogVerbose($"ENTER UndoBlacklistUser");
+        LogVerbose("=============================");
+        string? localRaidDBString = CPH.GetGlobalVar<string>("localRaidDB", true);
+
+        string data = (string)args["data"];
+        JObject dataObj = JObject.Parse(data);
+        string action = (string)dataObj["action"];
+        string target = (string)dataObj["target"];
+
+        if(action != null && action.Equals("unblacklist")){
+            // Update the database
+            UpdateUserBlacklistStatus(target, false);
+            LoadRaidDB();
+        }
+        
+        LogVerbose("=============================");
+        LogVerbose($"ENTER UndoBlacklistUser");
+        LogVerbose("=============================");
+        return true;
+    }
+
+    public bool UndoVetoUser(){
+        LogVerbose("=============================");
+        LogVerbose($"ENTER UndoVetoUser");
+        LogVerbose("=============================");
+        string? localRaidDBString = CPH.GetGlobalVar<string>("localRaidDB", true);
+
+        string data = (string)args["data"];
+        JObject dataObj = JObject.Parse(data);
+        string action = (string)dataObj["action"];
+        string target = (string)dataObj["target"];
+
+        if(action != null && action.Equals("unveto")){
+            // Update the database
+            UpdateUserVetoStatus(target, false);
+            LoadRaidDB();
+        }
+        
+        LogVerbose("=============================");
+        LogVerbose($"ENTER UndoVetoUser");
+        LogVerbose("=============================");
+        return true;
+    }
+
+    public bool RequestRender(){
+        LogVerbose("=============================");
+        LogVerbose($"ENTER RequestRender");
+        LogVerbose("=============================");
+        string data = (string)args["data"];
+        JObject dataObj = JObject.Parse(data);
+        string action = (string)dataObj["action"];
+
+        if(action != null && action.Equals("render")){
+            UpdateUI();
+        }
+        
+        LogVerbose("=============================");
+        LogVerbose($"ENTER RequestRender");
+        LogVerbose("=============================");
+        return true;
+    }
+
     /**
     * Runs through the local DB list and validates if users are online. If the status is changed then the database table
     * needs to have its entry updated.
@@ -382,6 +474,14 @@ public class CPHInline
         LogVerbose("=============================");
         LogVerbose($"ENTER InitRaidDB");
         LogVerbose("=============================");
+        
+        // On start, check if debug mode is to be enabled
+        bool? debug = CPH.GetGlobalVar<bool>("RR_DEBUG", true);
+        if(debug.HasValue){
+            DEBUG = debug.Value;
+        }
+        LogInfo($"INITIALIZING RAID ROULETTE....DEBUG MODE IS SET TO {DEBUG}!");
+        
         string? file = CPH.GetGlobalVar<string>("raidDBFile", true);
         string path = $@"Data Source={file}";
         SQLiteConnection sql_db = new SQLiteConnection(path);
@@ -402,6 +502,20 @@ public class CPHInline
         command.ExecuteNonQuery();
 
         sql = $@"CREATE UNIQUE INDEX IF NOT EXISTS userIdInd ON {RAID_TABLE} (userId);";
+        command = new SQLiteCommand(sql, sql_db);
+        command.ExecuteNonQuery();
+
+        // 2025-02-08 - Adding new row for keeping track of veto.
+        // This column should always be false on startup
+        try{
+            sql = $"ALTER TABLE {RAID_TABLE} ADD COLUMN isVeto BOOLEAN NOT NULL DEFAULT FALSE";
+            command = new SQLiteCommand(sql, sql_db);
+            command.ExecuteNonQuery();
+        } catch {
+            LogVerbose("Column already exists, continuing.");
+        }
+
+        sql = $"UPDATE {RAID_TABLE} SET isVeto = false";
         command = new SQLiteCommand(sql, sql_db);
         command.ExecuteNonQuery();
 
@@ -441,6 +555,7 @@ public class CPHInline
                 string lastRaidDate = SafeGetString(reader, 7);
                 int raidedByCount = reader.GetInt32(8);
                 string lastRaidedDate = SafeGetString(reader, 9);
+                bool isVeto = reader.GetBoolean(10);
                 
                 JObject jobj = new JObject(
                     new JProperty("userId", userId),
@@ -452,7 +567,8 @@ public class CPHInline
                     new JProperty("raidCount", raidCount),
                     new JProperty("lastRaidDate", lastRaidDate),
                     new JProperty("raidedByCount", raidedByCount),
-                    new JProperty("lastRaidedDate", lastRaidedDate)
+                    new JProperty("lastRaidedDate", lastRaidedDate),
+                    new JProperty("isVeto", isVeto)
                 );
                 jarray.Add(jobj);
             }
@@ -531,6 +647,26 @@ public class CPHInline
 
         LogVerbose("=============================");
         LogVerbose($"EXIT UpdateUserBlacklistStatus");
+        LogVerbose("=============================");
+    }
+
+    private void UpdateUserVetoStatus(string userId, bool isVeto){
+        LogVerbose("=============================");
+        LogVerbose($"ENTER UpdateUserVetoStatus");
+        LogVerbose("=============================");
+
+        string? file = CPH.GetGlobalVar<string>("raidDBFile", true);
+        string path = $@"Data Source={file}";
+        SQLiteConnection sql_db = new SQLiteConnection(path);
+        sql_db.Open();
+        string sql = $@"UPDATE {RAID_TABLE} SET isVeto = @isVeto WHERE userId = @userId";
+        SQLiteCommand command = new SQLiteCommand(sql, sql_db);
+        command.Parameters.AddWithValue(@"isVeto", isVeto);
+        command.Parameters.AddWithValue(@"userId", userId);
+        command.ExecuteNonQuery();
+
+        LogVerbose("=============================");
+        LogVerbose($"EXIT UpdateUserVetoStatus");
         LogVerbose("=============================");
     }
 
