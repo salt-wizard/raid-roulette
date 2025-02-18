@@ -142,3 +142,4 @@ dist
 /streamerbot/obj/streamerbot.csproj.nuget.g.props
 /streamerbot/obj/streamerbot.csproj.nuget.g.targets
 /streamerbot/bin
+/ui/dist.zip

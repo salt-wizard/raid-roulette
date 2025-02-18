@@ -1,18 +1,20 @@
 import { SetStateAction, useEffect, useState } from 'react';
 import { Accordion, AccordionDetails, AccordionSummary, Box, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
-import UndoIcon from '@mui/icons-material/Undo';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import './RaidScreen.css';
 
-const VetoScreen = ({sendMessage, raidList}) => {
-    function unvetoTarget(_e){
+const AcceptedScreen = ({sendMessage, raidList}) => {
+    function blackListTarget(_e){
         // The username is the current target value
         const eventJson = JSON.parse(_e.currentTarget.value);
         const userId = eventJson.userId;
+
         const json = {
-            "action": "unveto",
+            "action": "blacklist",
             "target": userId
         }
+
         sendMessage(JSON.stringify(json));
     }
 
@@ -24,23 +26,23 @@ const VetoScreen = ({sendMessage, raidList}) => {
                     aria-controls="panel1-content"
                     id="panel1-header"
                 >
-                    <Typography>Current Veto List</Typography>
+                    <Typography>Allowed Users List</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                     {raidList !== null ? raidList.map((raidTarget) => {
                         return (
-                            raidTarget["isVeto"] == true // Only show the target if they're not blacklisted, not vetoed, and online.
+                            raidTarget["isBlacklisted"] != true // All offline and online whitelisted users
                             ?
                             <Stack className="raid-box" key={raidTarget["userName"] + "-key"} direction="row">
                                 <Box>
-                                    <Tooltip title={"Undo veto on " + raidTarget["userName"]} placement="top">
+                                    <Tooltip title={"Blacklist " + raidTarget["userName"]} placement="top">
                                         <IconButton 
                                             value={'{"userId": "' + raidTarget["userId"] + '","userName": "' + raidTarget["userName"] + '"}'} 
                                             className="raid-button" 
-                                            color="success" 
-                                            variant="outlined"
-                                            onClick={unvetoTarget}> 
-                                            <UndoIcon/>
+                                            color="error" 
+                                            variant="outlined" 
+                                            onClick={blackListTarget}> 
+                                            <DeleteForeverIcon/>
                                         </IconButton>
                                     </Tooltip>
                                 </Box>
@@ -70,4 +72,4 @@ const VetoScreen = ({sendMessage, raidList}) => {
     );
 }
 
-export default VetoScreen
+export default AcceptedScreen

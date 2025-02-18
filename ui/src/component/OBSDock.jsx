@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import RaidScreen from './RaidScreen.jsx';
 import VetoScreen from './VetoScreen.jsx';
 import BlacklistScreen from './BlacklistScreen.jsx';
+import AcceptedScreen from './AcceptedScreen.jsx';
 import useWebSocket from 'react-use-websocket';
 
 // URL for Streamer.Bot Web Socket
@@ -76,6 +77,7 @@ const OBSDock = () => {
                         indicatorColor="primary"
                     >
                         <Tab value="Raid" label="Raid"/>
+                        <Tab value="Allowed" label="Allowed"/>
                         <Tab value="Vetoed" label="Vetoed"/>
                         <Tab value="Blacklisted" label="Blacklisted"/>
                     </Tabs>
@@ -83,6 +85,7 @@ const OBSDock = () => {
                 { tabValue === "Raid" ? <RaidScreen sendMessage={sendMessage} raidList={raidList} clientId={clientId} oAuthToken={oAuthToken} /> : null }
                 { tabValue === "Vetoed" ? <VetoScreen sendMessage={sendMessage} raidList={raidList} /> : null }
                 { tabValue === "Blacklisted" ? <BlacklistScreen sendMessage={sendMessage} raidList={raidList} /> : null }
+                { tabValue === "Allowed" ? <AcceptedScreen sendMessage={sendMessage} raidList={raidList} /> : null }                
             </Box>
             
         </div>
